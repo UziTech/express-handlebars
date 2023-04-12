@@ -236,6 +236,7 @@ describe("express-handlebars", () => {
 			const exphbs = expressHandlebars.create();
 			const dirPath = fixturePath("templates");
 			const templates = await exphbs.getTemplates(dirPath);
+			// @ts-expect-error handlebars types are wrong
 			const html = templates["template.handlebars"]({ text: "test text" });
 			expect(html).toBe("<p>test text</p>");
 		});
@@ -362,7 +363,7 @@ describe("express-handlebars", () => {
 
 	describe("engine", () => {
 		test("should call renderView", async () => {
-			jest.spyOn(expressHandlebars.ExpressHandlebars.prototype, "renderView").mockImplementation(() => Promise.resolve(null));
+			jest.spyOn(expressHandlebars.ExpressHandlebars.prototype, "renderView").mockImplementation(() => Promise.resolve(undefined));
 			const exphbs = expressHandlebars.create();
 			const cb = () => { /* empty */ };
 			exphbs.engine("view", {}, cb);
@@ -370,7 +371,7 @@ describe("express-handlebars", () => {
 		});
 
 		test("should call engine", async () => {
-			jest.spyOn(expressHandlebars.ExpressHandlebars.prototype, "renderView").mockImplementation(() => Promise.resolve(null));
+			jest.spyOn(expressHandlebars.ExpressHandlebars.prototype, "renderView").mockImplementation(() => Promise.resolve(undefined));
 			const cb = () => { /* empty */ };
 			expressHandlebars.engine()("view", {}, cb);
 			expect(expressHandlebars.ExpressHandlebars.prototype.renderView).toHaveBeenCalledWith("view", {}, cb);
@@ -649,7 +650,7 @@ describe("express-handlebars", () => {
 				const template = "template";
 				const options = {};
 				exphbs["_compileTemplate"](template, options);
-				expect(exphbs.handlebars.compile).toHaveBeenCalledWith(template, options);
+				expect(exphbs.handlebars!.compile).toHaveBeenCalledWith(template, options);
 			});
 
 			test("should trim template", () => {
@@ -659,7 +660,7 @@ describe("express-handlebars", () => {
 				const template = " template\n";
 				const options = {};
 				exphbs["_compileTemplate"](template, options);
-				expect(exphbs.handlebars.compile).toHaveBeenCalledWith("template", options);
+				expect(exphbs.handlebars!.compile).toHaveBeenCalledWith("template", options);
 			});
 		});
 
@@ -671,7 +672,7 @@ describe("express-handlebars", () => {
 				const template = "template";
 				const options = {};
 				exphbs["_precompileTemplate"](template, options);
-				expect(exphbs.handlebars.precompile).toHaveBeenCalledWith(template, options);
+				expect(exphbs.handlebars!.precompile).toHaveBeenCalledWith(template, options);
 			});
 
 			test("should trim template", () => {
@@ -681,7 +682,7 @@ describe("express-handlebars", () => {
 				const template = " template\n";
 				const options = {};
 				exphbs["_precompileTemplate"](template, options);
-				expect(exphbs.handlebars.precompile).toHaveBeenCalledWith("template", options);
+				expect(exphbs.handlebars!.precompile).toHaveBeenCalledWith("template", options);
 			});
 		});
 

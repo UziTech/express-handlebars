@@ -47,18 +47,18 @@ const defaultConfig: ConfigOptions = {
 export default class ExpressHandlebars {
 	config: ConfigOptions;
 	engine: Engine;
-	encoding: BufferEncoding;
-	layoutsDir: string;
-	extname: string;
+	encoding?: BufferEncoding;
+	layoutsDir?: string;
+	extname?: string;
 	compiled: CompiledCache;
 	precompiled: PrecompiledCache;
 	_fsCache: FsCache;
-	partialsDir: string|PartialsDirObject|(string|PartialsDirObject)[];
-	compilerOptions: CompileOptions;
-	runtimeOptions: RuntimeOptions;
-	helpers: FunctionObject;
-	defaultLayout: string;
-	handlebars: HandlebarsImport;
+	partialsDir?: string|PartialsDirObject|(string|PartialsDirObject)[];
+	compilerOptions?: CompileOptions;
+	runtimeOptions?: RuntimeOptions;
+	helpers?: FunctionObject;
+	defaultLayout?: string;
+	handlebars?: HandlebarsImport;
 
 	constructor (config: ConfigOptions = {}) {
 		// Config properties with defaults.
@@ -71,6 +71,7 @@ export default class ExpressHandlebars {
 		this.engine = this.renderView.bind(this);
 
 		// Normalize `extname`.
+		if (this.extname)
 		if (this.extname.charAt(0) !== ".") {
 			this.extname = "." + this.extname;
 		}
@@ -90,10 +91,10 @@ export default class ExpressHandlebars {
 		const partialsDirs = Array.isArray(this.partialsDir) ? this.partialsDir : [this.partialsDir];
 
 		const dirs = await Promise.all(partialsDirs.map(async dir => {
-			let dirPath: string;
-			let dirTemplates: TemplateDelegateObject;
-			let dirNamespace: string;
-			let dirRename: RenameFunction;
+			let dirPath: string | undefined;
+			let dirTemplates: TemplateDelegateObject | undefined;
+			let dirNamespace: string | undefined;
+			let dirRename: RenameFunction | undefined;
 
 			// Support `partialsDir` collection with object entries that contain a
 			// templates promise and a namespace.
@@ -111,10 +112,10 @@ export default class ExpressHandlebars {
 				throw new Error("A partials dir must be a string or config object");
 			}
 
-			const templates: HandlebarsTemplateDelegate|TemplateSpecification = dirTemplates || await this.getTemplates(dirPath, options);
+			const templates: TemplateDelegateObject|TemplateSpecificationObject = dirTemplates || await this.getTemplates(dirPath!, options);
 
 			return {
-				templates: templates as HandlebarsTemplateDelegate|TemplateSpecification,
+				templates: templates,
 				namespace: dirNamespace,
 				rename: dirRename,
 			};
@@ -144,7 +145,7 @@ export default class ExpressHandlebars {
 
 		const encoding = options.encoding || this.encoding;
 		const cache: PrecompiledCache|CompiledCache = options.precompiled ? this.precompiled : this.compiled;
-		const template: Promise<HandlebarsTemplateDelegate|TemplateSpecification> = options.cache && cache[filePath];
+		const template: Promise<HandlebarsTemplateDelegate|TemplateSpecification> | undefined = options.cache ? cache[filePath] : undefined;
 
 		if (template) {
 			return template;
@@ -155,7 +156,7 @@ export default class ExpressHandlebars {
 		try {
 			cache[filePath] = this._getFile(filePath, { cache: options.cache, encoding })
 				.then((file: string) => {
-					const compileTemplate: (file: string, options: RuntimeOptions) => TemplateSpecification|HandlebarsTemplateDelegate = (options.precompiled ? this._precompileTemplate : this._compileTemplate).bind(this);
+					const compileTemplate: (file: string, options?: RuntimeOptions) => TemplateSpecification|HandlebarsTemplateDelegate = (options.precompiled ? this._precompileTemplate : this._compileTemplate).bind(this);
 					return compileTemplate(file, this.compilerOptions);
 				});
 			return await cache[filePath];
@@ -165,7 +166,7 @@ export default class ExpressHandlebars {
 		}
 	}
 
-	async getTemplates (dirPath: string, options: PartialTemplateOptions = {}): Promise<HandlebarsTemplateDelegate|TemplateSpecification> {
+	async getTemplates (dirPath: string, options: PartialTemplateOptions = {}): Promise<TemplateSpecificationObject> {
 		const cache = options.cache;
 
 		const filePaths = await this._getDir(dirPath, { cache });
@@ -173,7 +174,7 @@ export default class ExpressHandlebars {
 			return this.getTemplate(path.join(dirPath, filePath), options);
 		}));
 
-		const hash = {};
+		const hash: TemplateSpecificationObject = {};
 		for (let i = 0; i < filePaths.length; i++) {
 			hash[filePaths[i]] = templates[i];
 		}
@@ -215,9 +216,9 @@ export default class ExpressHandlebars {
 
 	async renderView (viewPath: string): Promise<string>;
 	async renderView (viewPath: string, options: RenderViewOptions): Promise<string>;
-	async renderView (viewPath: string, callback: RenderCallback): Promise<null>;
-	async renderView (viewPath: string, options: RenderViewOptions, callback: RenderCallback): Promise<null>;
-	async renderView (viewPath: string, options: RenderViewOptions|RenderCallback = {}, callback: RenderCallback|null = null): Promise<string|null> {
+	async renderView (viewPath: string, callback: RenderCallback): Promise<undefined>;
+	async renderView (viewPath: string, options: RenderViewOptions, callback: RenderCallback): Promise<undefined>;
+	async renderView (viewPath: string, options: RenderViewOptions|RenderCallback = {}, callback?: RenderCallback): Promise<string|undefined> {
 		if (typeof options === "function") {
 			callback = options;
 			options = {};
@@ -225,10 +226,10 @@ export default class ExpressHandlebars {
 
 		const context = options as UnknownObject;
 
-		let promise: Promise<string>|null = null;
+		let promise: Promise<string>|undefined;
 		if (!callback) {
 			promise = new Promise((resolve, reject) => {
-				callback = (err, value) => { err !== null ? reject(err) : resolve(value); };
+				callback = (err, value) => { err !== null || typeof value === "undefined" ? reject(err) : resolve(value); };
 			});
 		}
 
@@ -236,8 +237,8 @@ export default class ExpressHandlebars {
 		// the developer set on the Express app. When this value exists, it's used
 		// to compute the view's name. Layouts and Partials directories are relative
 		// to `settings.view` path
-		let view: string;
-		const views = options.settings && options.settings.views;
+		let view: string | undefined;
+		const views = options.settings?.views;
 		const viewsPath = this._resolveViewsPath(views, viewPath);
 		if (viewsPath) {
 			view = this._getTemplateName(path.relative(viewsPath, viewPath));
@@ -280,9 +281,9 @@ export default class ExpressHandlebars {
 					{ ...renderOptions, layout: undefined },
 				);
 			}
-			callback(null, html);
+			callback!(null, html);
 		} catch (err) {
-			callback(err);
+			callback!(err as Error);
 		}
 
 		return promise;
@@ -309,11 +310,11 @@ export default class ExpressHandlebars {
 	// -- Protected Hooks ----------------------------------------------------------
 
 	protected _compileTemplate (template: string, options: RuntimeOptions = {}): HandlebarsTemplateDelegate {
-		return this.handlebars.compile(template.trim(), options);
+		return this.handlebars!.compile(template.trim(), options);
 	}
 
 	protected _precompileTemplate (template: string, options: RuntimeOptions = {}): TemplateSpecification {
-		return this.handlebars.precompile(template.trim(), options);
+		return this.handlebars!.precompile(template.trim(), options);
 	}
 
 	protected _renderTemplate (template: HandlebarsTemplateDelegate, context: UnknownObject = {}, options: RuntimeOptions = {}): string {
@@ -376,11 +377,11 @@ export default class ExpressHandlebars {
 		}
 	}
 
-	private _getTemplateName (filePath: string, namespace: string = null): string {
+	private _getTemplateName (filePath: string, namespace?: string): string {
 		let name = filePath;
 
-		if (name.endsWith(this.extname)) {
-			name = name.substring(0, name.length - this.extname.length);
+		if (name.endsWith(this.extname!)) {
+			name = name.substring(0, name.length - this.extname!.length);
 		}
 
 		if (namespace) {
@@ -390,7 +391,7 @@ export default class ExpressHandlebars {
 		return name;
 	}
 
-	private _resolveViewsPath (views: string|string[], file: string): string|null {
+	private _resolveViewsPath (views: string|string[]|undefined, file: string): string|undefined {
 		if (!Array.isArray(views)) {
 			return views;
 		}
@@ -410,10 +411,10 @@ export default class ExpressHandlebars {
 		}
 
 		// cannot resolve view
-		return null;
+		return undefined;
 	}
 
-	private _resolveLayoutPath (layoutPath: string): string|null {
+	private _resolveLayoutPath (layoutPath?: string): string|null {
 		if (!layoutPath) {
 			return null;
 		}
