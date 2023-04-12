@@ -844,13 +844,13 @@ describe("express-handlebars", () => {
 				expect(viewsPath).toBe(null);
 			});
 
-			test("should return null if not found", () => {
+			test("should return undefined if not found", () => {
 				const file = "/file.hbs";
 				const exphbs = expressHandlebars.create();
 				const viewsPath = exphbs["_resolveViewsPath"]([
 					"/views",
 				], file);
-				expect(viewsPath).toBe(null);
+				expect(viewsPath).toBe(undefined);
 			});
 		});
 

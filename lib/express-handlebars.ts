@@ -71,8 +71,7 @@ export default class ExpressHandlebars {
 		this.engine = this.renderView.bind(this);
 
 		// Normalize `extname`.
-		if (this.extname)
-		if (this.extname.charAt(0) !== ".") {
+		if (this.extname && this.extname.charAt(0) !== ".") {
 			this.extname = "." + this.extname;
 		}
 
@@ -115,7 +114,7 @@ export default class ExpressHandlebars {
 			const templates: TemplateDelegateObject|TemplateSpecificationObject = dirTemplates || await this.getTemplates(dirPath!, options);
 
 			return {
-				templates: templates,
+				templates,
 				namespace: dirNamespace,
 				rename: dirRename,
 			};
