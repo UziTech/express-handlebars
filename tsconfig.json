@@ -4,8 +4,8 @@
     "target": "ES2015",
     "declaration": true,
     "sourceMap": true,
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true
   },
   "include": ["./lib/**/*"]

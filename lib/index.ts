@@ -4,11 +4,11 @@
  * See the accompanying LICENSE file for terms.
  */
 
-import ExpressHandlebars from "./express-handlebars";
+import ExpressHandlebars from "./express-handlebars.js";
 import type {
 	ConfigOptions,
 	Engine,
-} from "../types";
+} from "../types/index.ts";
 
 export { ExpressHandlebars };
 

@@ -26,7 +26,7 @@ import type {
 	CompiledCache,
 	PrecompiledCache,
 	RenameFunction,
-} from "../types";
+} from "../types/index.ts";
 
 const readFile = promisify(fs.readFile);
 
